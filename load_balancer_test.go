@@ -8,10 +8,12 @@ package resty
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -615,6 +617,13 @@ func TestLoadBalancerConnectionRefusedMarksHostInactive(t *testing.T) {
 	_, _ = c.R().Get("/")
 
 	assertEqual(t, HostStateInActive, wrr.hosts[0].state)
+}
+
+func TestIsConnectionRefusedWrappedError(t *testing.T) {
+	err := fmt.Errorf("dial failed: %w", syscall.ECONNREFUSED)
+
+	assertTrue(t, isConnectionRefused(err))
+	assertFalse(t, isConnectionRefused(errors.New("dial failed")))
 }
 
 type mockTimeoutErr struct{}
